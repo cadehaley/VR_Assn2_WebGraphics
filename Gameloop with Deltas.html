@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+	<script language="javascript" src="jquery.hotkeys.js" type="text/javascript"></script>
+	<script language="javascript" src="key_status.js" = type="text/javascript"></script>
+	
+	<script type="text/javascript">
+		// document.addEventListener("keydown", keydownEvent, false);
+		// document.addEventListener("keyup", keyupEvent, false);
+		// function keydownEvent(e) {
+		// 	if (!e) {
+		// 		e = event;
+		// 	}
+		// }
+		// function keyupEvent(e) {
+		// 	if (!e) {
+		// 		e = event;
+		// 	}
+		// }
+		var maxFPS = 60;
+		function updateFrameRate(newFrameRate) {
+			maxFPS = newFrameRate;
+			document.getElementById("FrameRateLabel").innerHTML=maxFPS;
+		}
+		$(window).bind("load", function() {
+			
+			//Variables representing the canvas and the canvas' context (the context is used for actually drawing on the canvas)
+			var canvas = document.getElementById("canvas");
+			var context = canvas.getContext("2d");
+			
+			//The ball that we will be drawing on the canvas
+			var ball = {x:canvas.width/2, //the x location of the ball
+						y:canvas.height/2, //the y location of the ball
+						radius:10, //the radius of the ball
+						fillColor:"red", //what color should the ball be
+						strokeColor:"grey", //what color should the outline of the ball be
+						velocity_x:0, //how fast the ball will move in the x direction
+						velocity_y:0}; //how fast the ball will move in the y direction
+			
+			var fps = 0;
+			var frameThisSecond = 0;
+
+			setInterval(function() {
+				fps = frameThisSecond;
+				frameThisSecond = 0;
+			}, 1000);
+
+			var lastFrameTimeMS = 0;
+
+			//start us off the first time
+			requestAnimationFrame(mainLoop);
+			
+			//Game Loop
+			function mainLoop(timestamp) {
+				if(timestamp - lastFrameTimeMS < (1000 / maxFPS)) {
+					requestAnimationFrame(mainLoop);
+					return;
+				}
+				var delta = (timestamp - lastFrameTimeMS) / (1000 / 60);
+				lastFrameTimeMS = timestamp;
+				processInput();
+				update(delta);
+				draw();
+				frameThisSecond += 1;
+				
+				requestAnimationFrame(mainLoop);
+			}
+			
+			//Here is where we would read the user's input. We will fill this in later
+			function processInput() {
+				if (keydown.left) {
+					ball.velocity_x += -1;
+				}
+				if (keydown.right) {
+					ball.velocity_x += 1;
+				}
+				if (keydown.up) {
+					ball.velocity_y += -1;
+				}
+				if (keydown.down) {
+					ball.velocity_y += 1;
+				}
+			}
+			
+			//Here is where we would update the state of our game or simulation (e.g., make the ball move). We will fill this in later.
+			function update(delta) {
+				ball.x += ball.velocity_x * delta;
+				ball.y += ball.velocity_y * delta;
+				
+				// bounds checks
+				if (ball.x < 0 || ball.x > canvas.width) {
+					ball.velocity_x *= -1;
+				}
+				if (ball.y < 0 || ball.y > canvas.height) {
+					ball.velocity_y *= -1;
+				}
+			}
+			
+			//Draw the scene. Here we simply erase what was previously drawn (e.g., where the ball used to be), then draw it again
+			function draw() {
+				
+				//clear our drawing
+				context.clearRect(0, 0, canvas.width, canvas.height);
+				
+				//draw the ball
+				context.beginPath();
+				context.arc(ball.x, ball.y, ball.radius, 0, 2 * Math.PI, false);
+				context.fillStyle = ball.fillColor;
+				context.fill();
+				context.lineWidth = 1;
+				context.strokeStyle = ball.strokeColor;
+				context.stroke();
+				//context.closePath();
+				context.fillText("FPS: " + fps, 10, 10);
+			}
+		
+		});
+	</script>
+	
+	</head>
+	
+	<body>
+		<canvas id="canvas" width="640" 
+		height="480" style="border:1px solid #000;">
+		Your browser does not support the canvas element.
+		</canvas>
+		<input type="range" min="1" max="60" value="60" onchange="updateFrameRate(this.value)"/>
+		<span id="FrameRateLabel">60</span>
+	</body>
+	
+</html>
