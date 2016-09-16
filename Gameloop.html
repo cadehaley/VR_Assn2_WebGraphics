@@ -8,25 +8,21 @@
 	<script type="text/javascript">
 		// document.addEventListener("keydown", keydownEvent, false);
 		// document.addEventListener("keyup", keyupEvent, false);
-
 		// function keydownEvent(e) {
 		// 	if (!e) {
 		// 		e = event;
 		// 	}
 		// }
-
 		// function keyupEvent(e) {
 		// 	if (!e) {
 		// 		e = event;
 		// 	}
 		// }
-
 		var maxFPS = 60;
 		function updateFrameRate(newFrameRate) {
 			maxFPS = newFrameRate;
 			document.getElementById("FrameRateLabel").innerHTML=maxFPS;
 		}
-
 		$(window).bind("load", function() {
 			
 			//Variables representing the canvas and the canvas' context (the context is used for actually drawing on the canvas)
@@ -39,11 +35,12 @@
 						radius:10, //the radius of the ball
 						fillColor:"red", //what color should the ball be
 						strokeColor:"grey", //what color should the outline of the ball be
-						velocity_x:3, //how fast the ball will move in the x direction
-						velocity_y:1}; //how fast the ball will move in the y direction
+						velocity_x:0, //how fast the ball will move in the x direction
+						velocity_y:0}; //how fast the ball will move in the y direction
 			
 			var fps = 0;
 			var frameThisSecond = 0;
+
 			setInterval(function() {
 				fps = frameThisSecond;
 				frameThisSecond = 0;
@@ -56,20 +53,15 @@
 			
 			//Game Loop
 			function mainLoop(timestamp) {
-
 				if(timestamp - lastFrameTimeMS < (1000 / maxFPS)) {
 					requestAnimationFrame(mainLoop);
 					return;
 				}
-
-				var delta = timestamp - lastFrameTimeMS;
-
+				var delta = (timestamp - lastFrameTimeMS) / (1000 / 60);
 				lastFrameTimeMS = timestamp;
-
 				processInput();
 				update(delta);
 				draw();
-
 				frameThisSecond += 1;
 				
 				requestAnimationFrame(mainLoop);
@@ -93,7 +85,6 @@
 			
 			//Here is where we would update the state of our game or simulation (e.g., make the ball move). We will fill this in later.
 			function update(delta) {
-
 				ball.x += ball.velocity_x * delta;
 				ball.y += ball.velocity_y * delta;
 				
@@ -121,7 +112,6 @@
 				context.strokeStyle = ball.strokeColor;
 				context.stroke();
 				//context.closePath();
-
 				context.fillText("FPS: " + fps, 10, 10);
 			}
 		
