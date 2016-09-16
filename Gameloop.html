@@ -38,15 +38,21 @@
 						velocity_x:0, //how fast the ball will move in the x direction
 						velocity_y:0}; //how fast the ball will move in the y direction
 			
+			// calcs fps to display on screen
 			var fps = 0;
-			var frameThisSecond = 0;
-
+			var framesThisSecond = 0;
 			setInterval(function() {
-				fps = frameThisSecond;
-				frameThisSecond = 0;
+				fps = framesThisSecond;
+				framesThisSecond = 0;
 			}, 1000);
-
 			var lastFrameTimeMS = 0;
+
+			// variables for fixed update - variable render
+			var lag = 0;
+			var previous = 0;
+			const MS_Per_Update = 2;
+			var numUpdates = 0;
+			var numDraws = 0;
 
 			//start us off the first time
 			requestAnimationFrame(mainLoop);
@@ -57,12 +63,22 @@
 					requestAnimationFrame(mainLoop);
 					return;
 				}
-				var delta = (timestamp - lastFrameTimeMS) / (1000 / 60);
 				lastFrameTimeMS = timestamp;
+
+				// for fixed update - variable render
+				var elapsed = timestamp - previous;
+				previous = timestamp;
+				lag += elapsed;
+
 				processInput();
-				update(delta);
+
+				while (lag >= MS_Per_Update) {
+					update();
+					lag -= elapsed;
+				}
+
 				draw();
-				frameThisSecond += 1;
+				framesThisSecond += 1;
 				
 				requestAnimationFrame(mainLoop);
 			}
@@ -84,9 +100,11 @@
 			}
 			
 			//Here is where we would update the state of our game or simulation (e.g., make the ball move). We will fill this in later.
-			function update(delta) {
-				ball.x += ball.velocity_x * delta;
-				ball.y += ball.velocity_y * delta;
+			function update() {
+				console.log("Update")
+				numUpdates++;
+				ball.x += ball.velocity_x;
+				ball.y += ball.velocity_y;
 				
 				// bounds checks
 				if (ball.x < 0 || ball.x > canvas.width) {
@@ -99,7 +117,8 @@
 			
 			//Draw the scene. Here we simply erase what was previously drawn (e.g., where the ball used to be), then draw it again
 			function draw() {
-				
+				console.log("Draw")
+				numDraws++;
 				//clear our drawing
 				context.clearRect(0, 0, canvas.width, canvas.height);
 				
@@ -112,7 +131,9 @@
 				context.strokeStyle = ball.strokeColor;
 				context.stroke();
 				//context.closePath();
-				context.fillText("FPS: " + fps, 10, 10);
+				// context.fillText("FPS: " + fps, 10, 10);
+				context.fillText("Updates: " + numUpdates, 10, 10);
+				context.fillText("Draws: " + numDraws, 10, 30);
 			}
 		
 		});
