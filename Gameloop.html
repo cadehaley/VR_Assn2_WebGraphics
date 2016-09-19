@@ -13,15 +13,8 @@
 
 		// get user input from slider to designate max FPS
 		var maxFPS = 60;
-
-		// DEBUG//
 		var update_load = 0; // Amount of load to place on update loop, in ms
-		// END DEBUG //
 
-		function updateFrameRate(newFrameRate) {
-			maxFPS = newFrameRate;
-			document.getElementById("FrameRateLabel").innerHTML=maxFPS;
-		}
 		$(window).bind("load", function() {
 
 			// variables representing the canvas and the canvas' context (the context is used for actually drawing on the canvas)
@@ -38,22 +31,28 @@
 						velocity_y:0}; //how fast the ball will move in the y direction
 
 			// calc FPS to display on screen
-			var fps = 0,
-				framesThisSecond = 0,
-				previousTimestep = 0;
-			setInterval(function() {
-				fps = framesThisSecond;
-				framesThisSecond = 0;
-			}, 1000);
 
-			// variables for fixed update - variable render
-			const timestep = 1000 / 60;	// 60 fps
+
+
+			// GAME LOOP VARIABLES //
+			const timestep = 1000 / 60;	// update() call interval, 60 fps
 			var delta = 0,
-				numUpdates = 0,
-				numDraws = 0,
 				numCurrentUpdateSteps = 0,
 				lastFpsUpdate = 0,
+				framesDuringThisSecond = 0,
+				previousTimestep = 0;
+
+			// DEBUG variables
+			var fps = 0,
+			numUpdates = 0,
+			numDraws = 0;
+
+
+			// For FPS display, save framesDuringThisSecond every second to be sent to screen
+			setInterval(function() {
+				fps = framesDuringThisSecond;
 				framesDuringThisSecond = 0;
+			}, 1000);
 
 			// start us off the first time
 			requestAnimationFrame(mainLoop);
@@ -117,7 +116,7 @@
 
 			//Here is where we would update the state of our game or simulation (e.g., make the ball move). We will fill this in later.
 			function update(delta) {
-				console.log("Update")
+//				console.log("Update")
 				numUpdates++;
 				ball.x += ball.velocity_x * delta;
 				ball.y += ball.velocity_y * delta;
@@ -139,14 +138,14 @@
 					ball.y = canvas.height;
 					ball.velocity_y *= -1;
 				}
-				// DEBUG: Load simulation before calling update
+				// DEBUG: Load simulation
 				sleep(update_load);
 				// END DEBUG
 			}
 
 			//Draw the scene. Here we simply erase what was previously drawn (e.g., where the ball used to be), then draw it again
 			function draw() {
-				console.log("Draw")
+//				console.log("Draw")
 				numDraws++;
 				//clear our drawing
 				context.clearRect(0, 0, canvas.width, canvas.height);
@@ -171,20 +170,26 @@
 
 		});
 
-		// DEBUG FUNCTIONS ONLY ////////////////////////
-					function sleep(milliseconds) {
-		  				var start = new Date().getTime();
-		  				for (var i = 0; i < 1e7; i++) {
-		    				if ((new Date().getTime() - start) > milliseconds){
-		      				break;
-		    				}
-		  				}
-						}
+		// DEBUG FUNCTIONS ////////////////////////
+			function sleep(milliseconds) {
 
-					function setUpdateLoad(load) {
-						update_load = load;
-						document.getElementById("UpdateLoadLabel").innerHTML=update_load;
+					var start = new Date().getTime();
+					for (var i = 0; i < 1e7; i++) {
+	  				if ((new Date().getTime() - start) > milliseconds){
+	    				break;
+	  				}
 					}
+				}
+
+			function updateFrameRate(newFrameRate) {
+				maxFPS = newFrameRate;
+				document.getElementById("FrameRateLabel").innerHTML=maxFPS;
+			}
+			function setUpdateLoad(load) {
+				update_load = load;
+				document.getElementById("UpdateLoadLabel").innerHTML=update_load;
+			}
+			// END DEBUG FUNCTIONS
 
 
 
