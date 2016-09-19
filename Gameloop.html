@@ -35,18 +35,20 @@
 			// calc FPS to display on screen
 			var fps = 0,
 				framesThisSecond = 0,
-				lastFrameTimeMS = 0;
+				previousTimestep = 0;
 			setInterval(function() {
 				fps = framesThisSecond;
 				framesThisSecond = 0;
 			}, 1000);
 
 			// variables for fixed update - variable render
-			const timestep = 1000 / 60;
+			const timestep = 1000 / 60;	// 60 fps
 			var delta = 0,
-				previous = 0,
 				numUpdates = 0,
-				numDraws = 0;
+				numDraws = 0,
+				numCurrentUpdateSteps = 0,
+				lastFpsUpdate = 0,
+				framesDuringThisSecond = 0;
 
 			// start us off the first time
 			requestAnimationFrame(mainLoop);
@@ -55,26 +57,39 @@
 			function mainLoop(timestamp) {
 
 				// throttle gameloop to obey max FPS as designated by user
-				if(timestamp - lastFrameTimeMS < (1000 / maxFPS)) {
+				if (timestamp - previousTimestep < (1000 / maxFPS)) {
 					requestAnimationFrame(mainLoop);
 					return;
 				}
-				lastFrameTimeMS = timestamp;
 
 				// for fixed update - variable render
-				delta += timestamp - previous;
-				previous = timestamp;
+				delta += timestamp - previousTimestep;
+				previousTimestep = timestamp;
+
+				// spiral of death prevention
+				if (timestamp > lastFpsUpdate + 1000) {
+					fps = 0.25 * framesDuringThisSecond + 0.75 * fps;
+					lastFpsUpdate = timestamp;
+					framesDuringThisSecond = 0;
+				}
+				++framesDuringThisSecond;
 
 				processInput();
 
 				// update one fixed step at a time until gameloop is caught up
+				numCurrentUpdateSteps = 0;
 				while (delta >= timestep) {
 					update(timestep);
 					delta -= timestep;
+
+					// break out of spiral of death
+					if (++numCurrentUpdateSteps >= 200) {
+						breakOutOfSpiral();
+						break;
+					}
 				}
 
 				draw();
-				framesThisSecond += 1;
 				
 				requestAnimationFrame(mainLoop);
 			}
@@ -140,6 +155,10 @@
 				context.fillText("FPS: " + fps, 10, 10);
 				context.fillText("Updates: " + numUpdates, 10, 30);
 				context.fillText("Draws: " + numDraws, 10, 50);
+			}
+
+			function breakOutOfSpiral() {
+				delta = 0;
 			}
 		
 		});
