@@ -4,25 +4,30 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
 	<script language="javascript" src="jquery.hotkeys.js" type="text/javascript"></script>
 	<script language="javascript" src="key_status.js" = type="text/javascript"></script>
-	
+
 	<script type="text/javascript">
-		
+
 		// SOURCES CITED:
 		// code for fixed time step variable render from: http://www.isaacsukin.com/news/2015/01/detailed-explanation-javascript-game-loops-and-timing
 
 
 		// get user input from slider to designate max FPS
 		var maxFPS = 60;
+
+		// DEBUG//
+		var update_load = 0; // Amount of load to place on update loop, in ms
+		// END DEBUG //
+
 		function updateFrameRate(newFrameRate) {
 			maxFPS = newFrameRate;
 			document.getElementById("FrameRateLabel").innerHTML=maxFPS;
 		}
 		$(window).bind("load", function() {
-			
+
 			// variables representing the canvas and the canvas' context (the context is used for actually drawing on the canvas)
 			var canvas = document.getElementById("canvas");
 			var context = canvas.getContext("2d");
-			
+
 			// the ball that we will be drawing on the canvas
 			var ball = {x:canvas.width/2, //the x location of the ball
 						y:canvas.height/2, //the y location of the ball
@@ -90,10 +95,10 @@
 				}
 
 				draw();
-				
+
 				requestAnimationFrame(mainLoop);
 			}
-			
+
 			// read the user's input from arrow keys
 			function processInput() {
 				if (keydown.left) {
@@ -109,14 +114,14 @@
 					ball.velocity_y += 0.02;
 				}
 			}
-			
+
 			//Here is where we would update the state of our game or simulation (e.g., make the ball move). We will fill this in later.
 			function update(delta) {
 				console.log("Update")
 				numUpdates++;
 				ball.x += ball.velocity_x * delta;
 				ball.y += ball.velocity_y * delta;
-				
+
 				// bounds checks
 				if (ball.x < 0) {
 					ball.x = 0;
@@ -134,15 +139,18 @@
 					ball.y = canvas.height;
 					ball.velocity_y *= -1;
 				}
+				// DEBUG: Load simulation before calling update
+				sleep(update_load);
+				// END DEBUG
 			}
-			
+
 			//Draw the scene. Here we simply erase what was previously drawn (e.g., where the ball used to be), then draw it again
 			function draw() {
 				console.log("Draw")
 				numDraws++;
 				//clear our drawing
 				context.clearRect(0, 0, canvas.width, canvas.height);
-				
+
 				//draw the ball
 				context.beginPath();
 				context.arc(ball.x, ball.y, ball.radius, 0, 2 * Math.PI, false);
@@ -160,19 +168,42 @@
 			function breakOutOfSpiral() {
 				delta = 0;
 			}
-		
+
 		});
+
+		// DEBUG FUNCTIONS ONLY ////////////////////////
+					function sleep(milliseconds) {
+		  				var start = new Date().getTime();
+		  				for (var i = 0; i < 1e7; i++) {
+		    				if ((new Date().getTime() - start) > milliseconds){
+		      				break;
+		    				}
+		  				}
+						}
+
+					function setUpdateLoad(load) {
+						update_load = load;
+						document.getElementById("UpdateLoadLabel").innerHTML=update_load;
+					}
+
+
+
 	</script>
-	
+
 	</head>
-	
+
 	<body>
-		<canvas id="canvas" width="640" 
+		<canvas id="canvas" width="640"
 		height="480" style="border:1px solid #000;">
 		Your browser does not support the canvas element.
 		</canvas>
+		<body><br/>FPS:</body>
 		<input type="range" min="1" max="60" value="60" onchange="updateFrameRate(this.value)"/>
 		<span id="FrameRateLabel">60</span>
+
+		<body><br/>Update Load:</body>
+		<input type="range" min="0" max="30" value="0" onchange="setUpdateLoad(this.value)"/>
+		<span id="UpdateLoadLabel">0</span>
 	</body>
-	
+
 </html>
