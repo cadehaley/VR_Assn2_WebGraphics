@@ -32,7 +32,9 @@
 
 			// calc FPS to display on screen
 
-
+var result = 0;
+result = solveLinear(600,-80000,0.5,100);
+console.log("Linanswer: " + result);
 
 			// GAME LOOP VARIABLES //
 			const timestep = 1000 / 60;	// update() call interval, 60 fps
@@ -168,6 +170,41 @@
 			}
 
 		});
+
+		// Physics functions //
+
+
+
+		// Takes two ax+b equations and returns the intersection point x
+		// Returns 0 if solution is not within canvas
+		function solveLinear(a_slope, a_offset, b_slope, b_offset){
+			// Solve using bisection method (slow but simple)
+			var  left = 0, cursor = 0, right = canvas.width,
+				left_y = 0, cursor_y = 3, right_y = 0, counter = 0;
+			while (Math.abs(cursor_y)>1 && counter < 15){
+				// Place solution right between left and right x values
+				cursor = left + ((right-left)/2);
+				// Calculate 3 y-values
+				left_y = (a_slope * left + a_offset) - (b_slope * left + b_offset);
+				cursor_y = (a_slope * cursor + a_offset) - (b_slope * cursor + b_offset);
+				right_y = (a_slope * right + a_offset) - (b_slope * right + b_offset);
+				// If left and cursor have different signs, focus to left half
+				console.log(left_y + " " + cursor_y + " " + right_y);
+				if (Math.sign(left_y) != Math.sign(cursor_y)){
+					right = cursor;
+				}
+				// If cursor and right have same sign, focus to right half
+				else if (Math.sign(right_y) != Math.sign(cursor_y)){
+					left = cursor;
+				}
+				// If same sign on both sides, then no solution
+				else{
+					return 0
+				}
+				counter++;
+			}
+			return cursor;
+		}
 
 		// DEBUG FUNCTIONS ////////////////////////
 			function sleep(milliseconds) {
