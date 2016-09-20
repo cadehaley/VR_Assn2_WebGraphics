@@ -70,12 +70,12 @@
 				delta += timestamp - previousTimestep;
 				previousTimestep = timestamp;
 
-				// spiral of death prevention
-				if (timestamp > lastFpsUpdate + 1000) {
-					fps = 0.25 * framesDuringThisSecond + 0.75 * fps;
-					lastFpsUpdate = timestamp;
-					framesDuringThisSecond = 0;
-				}
+				// Compute FPS for display purposes
+//				if (timestamp > lastFpsUpdate + 1000) {
+//					fps = 0.25 * framesDuringThisSecond + 0.75 * fps;
+//					lastFpsUpdate = timestamp;
+//					framesDuringThisSecond = 0;
+//				}
 				++framesDuringThisSecond;
 
 				processInput();
@@ -87,7 +87,8 @@
 					delta -= timestep;
 
 					// break out of spiral of death
-					if (++numCurrentUpdateSteps >= 200) {
+					if (++numCurrentUpdateSteps >= 15) { // If FPS < 2
+						console.log("In spiral: breaking update loop");
 						breakOutOfSpiral();
 						break;
 					}
@@ -116,7 +117,6 @@
 
 			//Here is where we would update the state of our game or simulation (e.g., make the ball move). We will fill this in later.
 			function update(delta) {
-//				console.log("Update")
 				numUpdates++;
 				ball.x += ball.velocity_x * delta;
 				ball.y += ball.velocity_y * delta;
@@ -145,7 +145,6 @@
 
 			//Draw the scene. Here we simply erase what was previously drawn (e.g., where the ball used to be), then draw it again
 			function draw() {
-//				console.log("Draw")
 				numDraws++;
 				//clear our drawing
 				context.clearRect(0, 0, canvas.width, canvas.height);
@@ -206,7 +205,7 @@
 		<input type="range" min="1" max="60" value="60" onchange="updateFrameRate(this.value)"/>
 		<span id="FrameRateLabel">60</span>
 
-		<body><br/>Update Load:</body>
+		<body><br/>Update Load (spiral of death test):</body>
 		<input type="range" min="0" max="30" value="0" onchange="setUpdateLoad(this.value)"/>
 		<span id="UpdateLoadLabel">0</span>
 	</body>
