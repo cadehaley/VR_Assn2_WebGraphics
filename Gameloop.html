@@ -22,39 +22,33 @@
 			var context = canvas.getContext("2d");
 
 			// the ball that we will be drawing on the canvas
-			var ball = {x:canvas.width/2, //the x location of the ball
-						y:canvas.height/2, //the y location of the ball
-						radius:10, //the radius of the ball
-						fillColor:"red", //what color should the ball be
-						strokeColor:"grey", //what color should the outline of the ball be
-						velocity_x:0, //how fast the ball will move in the x direction
-						velocity_y:0}; //how fast the ball will move in the y direction
+			var ball = {x: canvas.width / 2, 	//the x location of the ball
+						y: canvas.height / 2, 	//the y location of the ball
+						radius: 10, 			//the radius of the ball
+						fillColor: "red", 		//what color should the ball be
+						strokeColor: "grey", 	//what color should the outline of the ball be
+						velocity_x: 0, 			//how fast the ball will move in the x direction
+						velocity_y: 0}; 		//how fast the ball will move in the y direction
 
-			// calc FPS to display on screen
-
-var result = 0;
-result = solveLinear(600,-80000,0.5,100);
-console.log("Linanswer: " + result);
+			var result = 0;
+			result = solveLinear(600,-80000,0.5,100);
+			console.log("Linanswer: " + result);
 
 			// GAME LOOP VARIABLES //
-			const timestep = 1000 / 60;	// update() call interval, 60 fps
+			const timestep = 1000 / 60;			// update() call interval, 60 fps
 			var delta = 0,
 				numCurrentUpdateSteps = 0,
 				lastFpsUpdate = 0,
-				framesDuringThisSecond = 0,
-				previousTimestep = 0;
+				previousTimestep = 0,
+				previousBallPosition_X = canvas.width / 2,
+				previousBallPosition_Y = canvas.height / 2;
 
 			// DEBUG variables
-			var fps = 0,
+			var fps = maxFPS,
 			numUpdates = 0,
-			numDraws = 0;
-
-
-			// For FPS display, save framesDuringThisSecond every second to be sent to screen
-			setInterval(function() {
-				fps = framesDuringThisSecond;
-				framesDuringThisSecond = 0;
-			}, 1000);
+			numDraws = 0,
+			framesThisSecond = 0,
+			numSpiralsOfDeathEscaped = 0;
 
 			// start us off the first time
 			requestAnimationFrame(mainLoop);
@@ -72,13 +66,13 @@ console.log("Linanswer: " + result);
 				delta += timestamp - previousTimestep;
 				previousTimestep = timestamp;
 
-				// Compute FPS for display purposes
-//				if (timestamp > lastFpsUpdate + 1000) {
-//					fps = 0.25 * framesDuringThisSecond + 0.75 * fps;
-//					lastFpsUpdate = timestamp;
-//					framesDuringThisSecond = 0;
-//				}
-				++framesDuringThisSecond;
+				// display exponential moving average FPS
+				if (timestamp > lastFpsUpdate + 1000) {
+					fps = Math.round(0.25 * framesThisSecond + 0.75 * fps);
+					lastFpsUpdate = timestamp;
+					framesThisSecond = 0;
+				}
+				++framesThisSecond;
 
 				processInput();
 
@@ -89,14 +83,14 @@ console.log("Linanswer: " + result);
 					delta -= timestep;
 
 					// break out of spiral of death
-					if (++numCurrentUpdateSteps >= 15) { // If FPS < 2
+					if (++numCurrentUpdateSteps >= 50) { // If FPS < 2
 						console.log("In spiral: breaking update loop");
 						breakOutOfSpiral();
 						break;
 					}
 				}
 
-				draw();
+				draw(delta / timestep);
 
 				requestAnimationFrame(mainLoop);
 			}
@@ -117,9 +111,14 @@ console.log("Linanswer: " + result);
 				}
 			}
 
-			//Here is where we would update the state of our game or simulation (e.g., make the ball move). We will fill this in later.
+			// update the state of our game/simulation
 			function update(delta) {
 				numUpdates++;
+
+				// save last position of ball for interpolated rendering
+				previousBallPosition_X = ball.x;
+				previousBallPosition_Y = ball.y;
+
 				ball.x += ball.velocity_x * delta;
 				ball.y += ball.velocity_y * delta;
 
@@ -140,20 +139,21 @@ console.log("Linanswer: " + result);
 					ball.y = canvas.height;
 					ball.velocity_y *= -1;
 				}
+
 				// DEBUG: Load simulation
 				sleep(update_load);
 				// END DEBUG
 			}
 
 			//Draw the scene. Here we simply erase what was previously drawn (e.g., where the ball used to be), then draw it again
-			function draw() {
+			function draw(interp) {
 				numDraws++;
 				//clear our drawing
 				context.clearRect(0, 0, canvas.width, canvas.height);
 
 				//draw the ball
 				context.beginPath();
-				context.arc(ball.x, ball.y, ball.radius, 0, 2 * Math.PI, false);
+				context.arc((previousBallPosition_X + (ball.x - previousBallPosition_X) * interp), (previousBallPosition_Y + (ball.y - previousBallPosition_Y) * interp), ball.radius, 0, 2 * Math.PI, false);
 				context.fillStyle = ball.fillColor;
 				context.fill();
 				context.lineWidth = 1;
@@ -163,10 +163,12 @@ console.log("Linanswer: " + result);
 				context.fillText("FPS: " + fps, 10, 10);
 				context.fillText("Updates: " + numUpdates, 10, 30);
 				context.fillText("Draws: " + numDraws, 10, 50);
+				context.fillText("Spirals of Death Escaped: " + numSpiralsOfDeathEscaped, 10, 70);
 			}
 
 			function breakOutOfSpiral() {
 				delta = 0;
+				++numSpiralsOfDeathEscaped;
 			}
 
 		});
@@ -177,17 +179,25 @@ console.log("Linanswer: " + result);
 
 		// Takes two ax+b equations and returns the intersection point x
 		// Returns 0 if solution is not within canvas
-		function solveLinear(a_slope, a_offset, b_slope, b_offset){
+		function solveLinear(a_slope, a_offset, b_slope, b_offset) {
 			// Solve using bisection method (slow but simple)
-			var  left = 0, cursor = 0, right = canvas.width,
-				left_y = 0, cursor_y = 3, right_y = 0, counter = 0;
-			while (Math.abs(cursor_y)>1 && counter < 15){
+			var left = 0,
+				cursor = 0,
+				right = canvas.width,
+				left_y = 0, 
+				cursor_y = 3, 
+				right_y = 0, 
+				counter = 0;
+			
+			while (Math.abs(cursor_y)>1 && counter < 15) {
 				// Place solution right between left and right x values
 				cursor = left + ((right-left)/2);
+				
 				// Calculate 3 y-values
 				left_y = (a_slope * left + a_offset) - (b_slope * left + b_offset);
 				cursor_y = (a_slope * cursor + a_offset) - (b_slope * cursor + b_offset);
 				right_y = (a_slope * right + a_offset) - (b_slope * right + b_offset);
+				
 				// If left and cursor have different signs, focus to left half
 				console.log(left_y + " " + cursor_y + " " + right_y);
 				if (Math.sign(left_y) != Math.sign(cursor_y)){
@@ -206,26 +216,28 @@ console.log("Linanswer: " + result);
 			return cursor;
 		}
 
+
+
 		// DEBUG FUNCTIONS ////////////////////////
-			function sleep(milliseconds) {
-
-					var start = new Date().getTime();
-					for (var i = 0; i < 1e7; i++) {
-	  				if ((new Date().getTime() - start) > milliseconds){
-	    				break;
-	  				}
-					}
+		function sleep(milliseconds) {
+			var start = Date.now();
+			for (var i = 0; i < 1e7; i++) {
+				if ((Date.now() - start) > milliseconds){
+					break;
 				}
+			}
+		}
 
-			function updateFrameRate(newFrameRate) {
-				maxFPS = newFrameRate;
-				document.getElementById("FrameRateLabel").innerHTML=maxFPS;
-			}
-			function setUpdateLoad(load) {
-				update_load = load;
-				document.getElementById("UpdateLoadLabel").innerHTML=update_load;
-			}
-			// END DEBUG FUNCTIONS
+		function updateFrameRate(newFrameRate) {
+			maxFPS = newFrameRate;
+			document.getElementById("FrameRateLabel").innerHTML=maxFPS;
+		}
+
+		function setUpdateLoad(load) {
+			update_load = load;
+			document.getElementById("UpdateLoadLabel").innerHTML=update_load;
+		}
+		// END DEBUG FUNCTIONS /////////////////////
 
 
 
@@ -235,15 +247,14 @@ console.log("Linanswer: " + result);
 
 	<body>
 		<canvas id="canvas" width="640"
-		height="480" style="border:1px solid #000;">
-		Your browser does not support the canvas element.
+			height="480" style="border:1px solid #000;">
+			Your browser does not support the canvas element.
 		</canvas>
-		<body><br/>FPS:</body>
-		<input type="range" min="1" max="60" value="60" onchange="updateFrameRate(this.value)"/>
+
+		<br>FPS:<input type="range" min="1" max="60" value="60" onchange="updateFrameRate(this.value)"/>
 		<span id="FrameRateLabel">60</span>
 
-		<body><br/>Update Load (spiral of death test):</body>
-		<input type="range" min="0" max="30" value="0" onchange="setUpdateLoad(this.value)"/>
+		<br>Update Load (spiral of death test):<input type="range" min="0" max="30" value="0" onchange="setUpdateLoad(this.value)"/>
 		<span id="UpdateLoadLabel">0</span>
 	</body>
 
