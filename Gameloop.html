@@ -66,6 +66,8 @@
 				delta += timestamp - previousTimestep;
 				previousTimestep = timestamp;
 
+				begin(timestamp, delta);
+
 				// display exponential moving average FPS
 				if (timestamp > lastFpsUpdate + 1000) {
 					fps = Math.round(0.25 * framesThisSecond + 0.75 * fps);
@@ -91,6 +93,8 @@
 				}
 
 				draw(delta / timestep);
+
+				end(fps);
 
 				requestAnimationFrame(mainLoop);
 			}
@@ -169,6 +173,14 @@
 			function breakOutOfSpiral() {
 				delta = 0;
 				++numSpiralsOfDeathEscaped;
+			}
+
+			function begin(timestamp, delta) {
+
+			}
+
+			function end(fps) {
+
 			}
 
 		});
